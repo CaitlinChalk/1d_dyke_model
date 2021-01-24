@@ -16,9 +16,8 @@ h = hin;
 z = zin;
 
 n = length(h);
-displ = 0; %initial displacement
 zf = z(n) + dz/100; %initialise zf
-zf00 = zf; %save initial tip position
+x = zf - z;
 %z = zf00 + displ - z; 
 
 %update BC for h at n-1
@@ -26,8 +25,8 @@ zf00 = zf; %save initial tip position
 
 %initial pressure and Minv
 Pe0 = zeros(n,1);
-[M1,M2] = matrixM(z,zf);
-Pe = elasticPressure(parameters, h, Pe0, z, zf,M1,M2); %initial guess for pressure
+[M1,M2] = matrixM(x);
+Pe = elasticPressure(parameters, h, Pe0, M1,M2); %initial guess for pressure
 
 %Convergence parameters
 tol = parameters.tol;
@@ -39,8 +38,8 @@ dt = parameters.dt;
 hmax = zeros(1,nTimeSteps);
 fnorm = zeros(1,nTimeSteps);
 figure(1); hold on
-plot(z(1:n-1),h(1:n-1),'k','LineWidth',2)
-xlabel("z")
+plot(x(1:n-1),h(1:n-1),'k','LineWidth',2)
+xlabel("zf - z")
 ylabel("h/Pe")
 figure(2); hold on
 plot(0,zf,'k*')
@@ -49,7 +48,7 @@ plot(0,zf,'k*')
      h0 = h;
      zf0 = zf;
      Pe0 = Pe;
-     [h,Pe,f,z] = newtonAlgorithm(parameters, h0, Pe0, z, zf0, @dykewidthFDM,@fdJacobian,tol, maxIts);     
+     [h,Pe,f,z,x] = newtonAlgorithm(parameters, h0, Pe0, z, x, zf0, @dykewidthFDM,@fdJacobian,tol, maxIts);     
      %update tip position
      dzf2 = tipIncrement(parameters,h,h0,Pe,Pe0,z,zf0);
      zf2 = zf0 + dzf2;
@@ -68,16 +67,15 @@ plot(0,zf,'k*')
      h(n-1) = Kc*(2^0.5)*(zf - z(n-1))^0.5; % h at n-1   
      hmax(i) = max(h(1:n-1));
      fnorm(i) = norm(f);
-     x = vertcat(z(1:n-1),zf) - z;
      if mod(i,100) == 0
         fprintf('Completed step %d \n', i)
         fprintf('norm(f) is %.4f \n', norm(f))
         fprintf('max h is %.3f \n', hmax(i))
         figure(1)
-        plot(vertcat(z(1:n-1),zf),vertcat(h(1:n-1),0),'o-');
-        plot(z(1:n-1),Pe(1:n-1),'-')
-        plot(zf,0,'o')
-        
+        plot(x,vertcat(h(1:n-1),0),'o-');
+        plot(x(1:n-1),Pe(1:n-1),'-')
+        figure(3)
+        plot(z,vertcat(h(1:n-1),0),'o-');
         figure(2); hold on
         plot(i,zf,'-o')
         plot(i,zf2,'-.^')

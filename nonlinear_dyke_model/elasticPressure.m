@@ -18,8 +18,8 @@ Kc = parameters.Kc;
 n = length(h);
 
 %define V2
-V2 = M2(1:n-1,1:n-1)*Pe0(1:n-1);
-
+%V2 = M2(1:n-1,1:n-1)*Pe0(1:n-1);
+V2 = M2*Pe0;
 %% Elastic pressure
 
 h2 = h;
@@ -30,12 +30,12 @@ h2(n) = Kc*(2^0.5);
 
 tol = 1e-2;
 maxit = n-1;
-Pe = gmresnomsg(M1,h2,[],tol,maxit); 
+Pe1 = gmresnomsg(M1,h2,[],tol,maxit); 
 % if size(Pe) < n
 %     Pe = vertcat(Pe,0);
 % end
-    %Pe2 = gmresnomsg(M1,V2,[],tol,maxit); 
-%Pe = Pe1 + h(n)*Pe2;
+Pe2 = gmresnomsg(M1,V2,[],tol,maxit); 
+Pe = Pe1 + h(n)*Pe2;
 %Pe = ones(n-1,1);
 
 %Pe(tf) = 0;

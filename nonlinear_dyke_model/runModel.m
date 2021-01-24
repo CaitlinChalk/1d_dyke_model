@@ -17,7 +17,7 @@ A = 0.1; %scaling factor for Kc: Kc = A*Ks
 parameters = struct();
 
 %numerical parameters
-parameters.dt = 0.000001;
+parameters.dt = 0.000005;
 parameters.dz = 0.0472; %0.0236
 parameters.nTimeSteps = 1000000;
 parameters.tol = 1.e-6;
@@ -45,32 +45,33 @@ hq = interp1(M(:,1),M(:,2),z);
 hq2 = hq;
 tf = (z < 8);
 hq(tf) = 1.0177;
-hq(n) = 0;
+
 
 %smoother h:
 p = polyfit(z, hq, 9);
 v = polyval(p, z);
 hq(~tf) = v(~tf);
+hq(n) = 0;
 
 close all
 figure; hold on
 plot(z(1:n-1),hq(1:n-1),'o'); 
 %plot(z(1:n-1),v(1:n-1),'o-'); 
 
-[M1,M2] = matrixM(z,z(n) + dz/100);
-
-tol = 1e-2;
-maxit = 499;
-%Pe_gm = gmres(M1s,h2b(1:nz-1),[],tol,maxit); 
-hn = 2*(2^0.5);
-hq2 = hq;
-hq2(n) = hn;
-Pe = gmres(M1,hq2,[],tol,maxit);
-figure
-plot(z,Pe,'-o')
+% [M1,M2] = matrixM(z,z(n) + dz/100);
+% 
+% tol = 1e-2;
+% maxit = 499;
+% %Pe_gm = gmres(M1s,h2b(1:nz-1),[],tol,maxit); 
+% hn = 2*(2^0.5);
+% hq2 = hq;
+% hq2(n) = hn;
+% Pe = gmres(M1,hq2,[],tol,maxit);
+% figure
+% plot(z,Pe,'-o')
 %%
 close all
-[h,hmax,fnorm,t] = dykeModel(parameters,v,z); 
+[h,hmax,fnorm,t] = dykeModel(parameters,hq,z); 
 
 %%
 % figure(1);
