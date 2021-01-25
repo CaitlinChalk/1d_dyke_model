@@ -9,7 +9,7 @@ rhom = 2700; %Magma density (kg /m^3)
 rhos = 2900; %Host rock density
 drho = rhos - rhom;
 g = 9.81;
-Q = 2;
+Q = 1;
 Ks = ((3*mu*Q/2)^(1/6))*((G/(1-nu))^(1/2))*((drho*g)^(2/3)); %= 9.7673 10^6
 A = 0.1; %scaling factor for Kc: Kc = A*Ks
 
@@ -18,10 +18,10 @@ parameters = struct();
 
 %numerical parameters
 parameters.dt = 0.000005;
-parameters.dz = 0.0472; %0.0236
+parameters.dz = 0.0472; %0.0236; 
 parameters.nTimeSteps = 1000000;
-parameters.tol = 1.e-6;
-parameters.maxIts = 100;
+parameters.tol = 1.e-5;
+parameters.maxIts = 50;
 
 %Material/problem parameters
 parameters.Q = 2; %or 2 m^3/ms ?

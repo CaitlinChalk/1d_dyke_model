@@ -1,4 +1,4 @@
-function [h,Pe,f,zf] = newtonAlgorithm(parameters, h0, Pe0, M1, M2, dykewidthFDM, fdJacobian, tol, maxIts)
+function [h,Pe,f] = newtonAlgorithm(parameters, h0, Pe0, M1, M2, dykewidthFDM, fdJacobian, tol, maxIts)
 
 %Input - parameters - model parameters
 %      - dykewidthFDM - function handle for nonlinear system
