@@ -17,23 +17,21 @@ A = 0.1; %scaling factor for Kc: Kc = A*Ks
 parameters = struct();
 
 %numerical parameters
-parameters.dt = 0.000005;
-parameters.dz = 0.0472; %0.0236; 
-parameters.nTimeSteps = 1000000;
-parameters.tol = 1.e-5;
+parameters.dt = 0.000002;
+parameters.dz = 0.0236; 
+parameters.nTimeSteps = 5000000;
+parameters.tol = 1.e-6;
 parameters.maxIts = 50;
 
 %Material/problem parameters
 parameters.Q = 2; %or 2 m^3/ms ?
 parameters.drho = drho;
 %parameters.g = 9.81;
-parameters.hs = ((3*mu*Q)/(2*drho*g))^(1/3);
-parameters.alpha = parameters.dt/(4*parameters.hs*(parameters.dz^2));
 parameters.Kc = 1;%*Ks;
 
 %% define initial conditions (h0, zf0)
 dz = parameters.dz;
-z0 = 0;
+z0 = -100;
 z = (0:dz:11.8)';
 n = length(z);
 
@@ -51,27 +49,38 @@ hq(tf) = 1.0177;
 p = polyfit(z, hq, 9);
 v = polyval(p, z);
 hq(~tf) = v(~tf);
+hq = hq - 0.0177;
 hq(n) = 0;
+
+z2 = z + z0;
+zf = z2(n) + dz/100;
+
+x = zf - z2;
 
 close all
 figure; hold on
-plot(z(1:n-1),hq(1:n-1),'o'); 
+plot(z2(1:n-1),hq(1:n-1),'o'); 
 %plot(z(1:n-1),v(1:n-1),'o-'); 
-
-% [M1,M2] = matrixM(z,z(n) + dz/100);
-% 
-% tol = 1e-2;
+%M1 = matrixM(x,dz);
+[M1,M2] = matrixM(x,dz);
+%% 
+% tol = 1e0;
 % maxit = 499;
-% %Pe_gm = gmres(M1s,h2b(1:nz-1),[],tol,maxit); 
-% hn = 2*(2^0.5);
+% % %Pe_gm = gmres(M1s,h2b(1:nz-1),[],tol,maxit); 
+% hn = (2^0.5);
 % hq2 = hq;
 % hq2(n) = hn;
 % Pe = gmres(M1,hq2,[],tol,maxit);
-% figure
+% 
+% V2 = M2*Pe;
+% Pe2 = gmres(M1,V2,[],tol,maxit);
+% close all
+% figure; hold on
 % plot(z,Pe,'-o')
+% plot(z,Pe2,'-x')
 %%
 close all
-[h,hmax,fnorm,t] = dykeModel(parameters,hq,z); 
+[h,hmax,zf,t] = dykeModel(parameters,hq,z2); 
 
 %%
 % figure(1);

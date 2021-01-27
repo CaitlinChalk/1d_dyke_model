@@ -1,4 +1,4 @@
-function [h,hmax,fnorm,t] = dykeModel(parameters, hin, zin)
+function [h,hmax,zf,t] = dykeModel(parameters, hin, zin)
 
 %solves the governing dyke model equations using Newton's method
 %input - parameters - model parameters
@@ -17,12 +17,16 @@ z = zin;
 
 n = length(h);
 zf = z(n) + dz/100; %initialise zf
+z0 = min(z);
 x = zf - z;
+zf2 = zf; %save separate zf to compare two different calculation methods for h(n)/dzf
+zf3 = zf;
 
-%update BC for h at n-1
+%BC for h at n-1
 h(n-1) = Kc*(2^0.5)*(x(n-1))^0.5; % h at n-1 
 
 %initial pressure and Minv
+warning('off','MATLAB:gmres:tooBigTolerance')
 Pe0 = zeros(n,1);
 [M1,M2] = matrixM(x,dz);
 Pe = elasticPressure(parameters, h, Pe0, M1,M2); %initial guess for pressure
@@ -47,14 +51,17 @@ plot(0,zf,'k*')
      h0 = h;
      zf0 = zf;
      Pe0 = Pe;
-     [h,Pe,f] = newtonAlgorithm(parameters, h0, Pe0, M1, M2, @dykewidthFDM,@fdJacobian,tol, maxIts);      
-     h(n) = tipIncrement2(parameters,x(n-1),zf0,h,h0);    
+     [h,Pe,f] = newtonAlgorithm(parameters, h0, x(n), Pe0, M1, M2, @dykewidthFDM,@fdJacobian,tol, maxIts);      
+     %h(1) = (1/( (Pe(2)-Pe(1))/dz + 1))^(1/3);
+     h(n) = tipIncrement(parameters,h,h0,Pe,Pe0,x(n));    
+     %h(n) = tipIncrement2(parameters,h,h0);
      zf = zf0 + h(n);
-     %update BC for h at n-1
-     h(n-1) = Kc*(2^0.5)*(x(n-1))^0.5; % h at n-1   
+   %  zf2 = zf2 + hn2;
+%      zf3 = zf3 - hn2;
+     %update BC for h at n-1    
      hmax(i) = max(h(1:n-1));
      fnorm(i) = norm(f);
-     if mod(i,500) == 0
+     if mod(i,1000) == 0
         fprintf('Completed step %d \n', i)
         fprintf('norm(f) is %.4f \n', norm(f))
         fprintf('max h is %.3f \n', hmax(i))
@@ -62,16 +69,21 @@ plot(0,zf,'k*')
         plot(x,vertcat(h(1:n-1),0),'o-');
         plot(x(1:n-1),Pe(1:n-1),'-')        
         figure(2); hold on
-        plot(dt*i,zf,'-o')
-%         plot(i,zf2,'-.^')
+        plot(t,zf,'-o')
+      %  plot(dt*i,zf2,'-.^')
+%         plot(dt*i,zf3,'-.*')
         xlabel("Time")
-         ylabel("zf")
-         figure(3); hold on
-        plot(dt*i,hmax(i),'o-');
+        ylabel("zf")
+        figure(3); hold on
+        plot(t,hmax(i),'o-');
         xlabel("Time")
-         ylabel("hmax")
+        ylabel("hmax")
      end
-     
+     if mod(i,10000) == 0
+        zn = convertToZ(z0,zf,n);
+        figure(4); hold on
+        plot(zn,vertcat(h(1:n-1),0),'k-');
+     end
  end
 
 

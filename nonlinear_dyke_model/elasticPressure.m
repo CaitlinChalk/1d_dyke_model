@@ -28,7 +28,7 @@ h2(n) = Kc*(2^0.5);
 %Pe = (Minv*h2' - h(n)*Minv*V2)';
 %Pe = (M1\h(1:n-1) - h(n)*(M1\V2));
 
-tol = 1e-2;
+tol = 5e-2;
 maxit = n-1;
 Pe1 = gmresnomsg(M1,h2,[],tol,maxit); 
 % if size(Pe) < n
@@ -36,7 +36,7 @@ Pe1 = gmresnomsg(M1,h2,[],tol,maxit);
 % end
 Pe2 = gmresnomsg(M1,V2,[],tol,maxit); 
 Pe = Pe1 + h(n)*Pe2;
-%Pe = ones(n-1,1);
+
 
 %Pe(tf) = 0;
 %To do - calculate Pe(n)?
