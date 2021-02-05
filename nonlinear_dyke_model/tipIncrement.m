@@ -17,9 +17,12 @@ n = length(h);
 dt = parameters.dt;
 dz = parameters.dz;
 
-phi = h(n-2)^3*(-(Pe(n-1) - Pe(n-3))/(2*dz) + 1);
-phi0 = h0(n-2)^3*(-(Pe0(n-1) - Pe0(n-3))/(2*dz) + 1);
+% phi = h(n-2)^3*(-(Pe(n-1) - Pe(n-3))/(2*dz) + 1);
+% phi0 = h0(n-2)^3*(-(Pe0(n-1) - Pe0(n-3))/(2*dz) + 1);
 
-dzf =  (xn/h0(n-2))*(h0(n-2) - h(n-2)) + (dt/(2*h0(n-2)))*(phi0 + phi); 
+%dzf =  (xn/h0(n-2))*(h0(n-2) - h(n-2)) + (dt/(2*h0(n-2)))*(phi0 + phi); 
 
+phi = h(n-2)^3*((Pe(n-2) - Pe(n-3))/(dz) - 1);
+phi0 = h0(n-2)^3*((Pe0(n-2) - Pe0(n-3))/(dz) - 1);
 
+dzf =  -((xn/h(n-2))*(h(n-2) - h0(n-2)) + (dt/(2*h(n-2)))*(phi0 + phi)); 

@@ -1,4 +1,4 @@
-function Pe = elasticPressure(parameters,h,Pe0,M1,M2)
+function Pe = elasticPressure(parameters,h,Pe0,Minv,M2)
 
 %function to obtain the dyke pressure along depth from width
 %input - h - array of width for 1 - n-1. h(n) = dzf = zf|t+1 - zf|t
@@ -25,17 +25,7 @@ V2 = M2*Pe0;
 h2 = h;
 h2(n) = Kc*(2^0.5);
 
-%Pe = (Minv*h2' - h(n)*Minv*V2)';
-%Pe = (M1\h(1:n-1) - h(n)*(M1\V2));
-
-tol = 5e-2;
-maxit = n-1;
-Pe1 = gmresnomsg(M1,h2,[],tol,maxit); 
-% if size(Pe) < n
-%     Pe = vertcat(Pe,0);
-% end
-Pe2 = gmresnomsg(M1,V2,[],tol,maxit); 
-Pe = Pe1 + h(n)*Pe2;
+Pe = Minv*h2 - h(n)*Minv*V2;
 
 
 %Pe(tf) = 0;

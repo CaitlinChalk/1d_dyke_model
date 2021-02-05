@@ -1,4 +1,4 @@
-function [M1,M2] = matrixM(x,dz)
+function [M1,M2] = matrixMreduced(x,dz)
 
 %function to calculate the matrices M1 and M2
 
@@ -12,8 +12,6 @@ M1 = zeros(n);
 for i = 1:n-1
     for j = 1:n
 
-        km = klogterm(x(i),x(j) + dz/2);
-        kp = klogterm(x(i),x(j) - dz/2);
 
         if i ~= j 
             k = klogterm(x(i),x(j));
@@ -22,22 +20,20 @@ for i = 1:n-1
         end
         
         if j == 1           
-            M1(i,j) = k - kp; 
-        elseif j == n
-            M1(i,j) = km;
+            M1(i,j) = k; 
         else
-            M1(i,j) = km + 2*k - kp;
+            M1(i,j) = 2*k;
         end
 
     end
 end
 
 
-M1(n,2:n-1) = (2./((x(2:n-1)+dz/2).^0.5) + 4./(x(2:n-1).^0.5) - 2./((x(2:n-1)-dz/2).^0.5) )';
-M1(n,1) = 2/(x(1)^0.5) - 2/((x(1)-dz/2.)^0.5);
-M1(n,n) = 2/((x(n)+dz/2.)^0.5);
+M1(n,2:n-1) = 4./(x(2:n-1).^0.5)';
+M1(n,1) = 2/(x(1)^0.5);
+M1(n,n) = 0;
 
-M1 = (dz/(4*pi))*M1;
+M1 = (dz/(2*pi))*M1;
 
 
 %z coordinate system

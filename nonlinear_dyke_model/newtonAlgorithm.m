@@ -1,4 +1,4 @@
-function [h,Pe,f] = newtonAlgorithm(parameters, h0, xn, Pe0, M1, M2, dykewidthFDM, fdJacobian, tol, maxIts)
+function [h,Pe,f] = newtonAlgorithm(parameters, h0, xn, Pe0, Minv, M2, dykewidthFDM, fdJacobian, tol, maxIts)
 
 %Input - parameters - model parameters
 %      - dykewidthFDM - function handle for nonlinear system
@@ -27,7 +27,7 @@ while norm(f) > tol && it < maxIts
     h(2:n-2) = h(2:n-2) + delta1;
     %h(1) = 1;%(1/( (Pe(2)-Pe(1))/dz + 1))^(1/3);
     %h2 = h(2:n-1) - h(1:n-2);    
-    Pe = elasticPressure(parameters, h, Pe0, M1, M2); %update Pressure
+    Pe = elasticPressure(parameters, h, Pe0, Minv, M2); %update Pressure
     f = dykewidthFDM(parameters,h,h0,Pe,Pe0);
     %h(n) = tipIncrement(parameters,h,h0,Pe,Pe0,xn);       
     %zf = zf + h(n); 
