@@ -11,7 +11,7 @@ drho = rhos - rhom;
 g = 9.81;
 Q = 1;
 
-dz = 0.0472;
+dz = 0.0472/2;
 
 %define input parameters to pass to model
 parameters = struct();
@@ -35,7 +35,7 @@ dta = (20/500)*(dza);%dza = dz/za
 parameters.dt = dta;
 parameters.dz = dz;
 parameters.nTimeSteps = 2000000;
-parameters.nPlot = 10;%round(0.5/parameters.dt);
+parameters.nPlot = 10;%round(0.1/parameters.dt);
 
 
 parameters.ha = ha;

@@ -34,36 +34,34 @@ b(1)=-Q+h0(1)^3.0*(3.0*(Pe0(2)-Pe0(1))/dz-2.0-(V(2)-V(1))/dz);
 
 
 %from thesis
-% for i = 2:n-2
-%     A(i,:) = (-fdiff(LS(i+1,:),LS(i-1,:),dz)*((3/2)*dt*(h0(i)^2)*fdiff(h0(i+1),h0(i-1),dz)) ...
-%         - fdiff2(LS(i,:),LS(i+1,:),LS(i-1,:),dz).*(dt/2).*h0(i)^3);
-%     A(i,i) = A(i,i) ...
-%         + (1 - ((3*dt)/2)*(h0(i)^2)*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz) - 3*dt*h0(i)*fdiff(h0(i+1),h0(i-1),dz)*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1));
-%     A(i-1,i) = A(i-1,i) + ((3*dt/4*dz)*(h0(i)^2)*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1));
-%     A(i+1,i) = (-(3*dt/4*dz)*h0(i)^2*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1));
-%             
-%     b(i) = h0(i) + dt*(h0(i)^2)*fdiff(h0(i+1),h0(i-1),dz)*(-3*fdiff(Pe0(i+1),Pe0(i-1),dz) + 3/2) ...
-%     - dt*(h0(i)^3)*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz) ...
-%     + (3*dt/2)*(h0(i)^2)*fdiff(h0(i+1),h0(i-1),dz)*fdiff(V(i+1),V(i-1),dz) ...
-%     + (dt/2)*(h0(i)^3)*fdiff2(V(i),V(i+1),V(i-1),dz);  
-%  
-% end
+for i = 2:n-2
+    A(i,:) = A(i,:) + (-2*dz*fdiff(LS(i+1,:),LS(i-1,:),dz)*(3*dt*(h0(i)^2)*fdiff(h0(i+1),h0(i-1),dz))/(4*dz) ...
+        - fdiff2(LS(i,:),LS(i+1,:),LS(i-1,:),dz).*(dt/2).*h0(i)^3);       
+    A(i,i-1) = A(i,i-1) + 3*dt*(h0(i)^2)*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1)/(4*dz);    
+    A(i,i) = A(i,i) ...
+       + (1 - (3*dt)*(h0(i)^2)*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz)/2 - 3*dt*h0(i)*fdiff(h0(i+1),h0(i-1),dz)*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1));           
+   A(i,i+1) = A(i,i+1) + (-3*dt*h0(i)^2*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1))/(4*dz);            
+   b(i) = h0(i) + dt*(h0(i)^2)*fdiff(h0(i+1),h0(i-1),dz)*(-3*fdiff(Pe0(i+1),Pe0(i-1),dz) + 3/2) ...
+    - dt*(h0(i)^3)*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz) ...
+    + (1.5*dt)*(h0(i)^2)*fdiff(h0(i+1),h0(i-1),dz)*fdiff(V(i+1),V(i-1),dz) ...
+    + (dt/2)*(h0(i)^3)*fdiff2(V(i),V(i+1),V(i-1),dz);
+end
 
 %from fortran code
 
-for i=2:n-2
-      A(i,:)=A(i,:)-(LS(i+1,:)-LS(i-1,:))*(3.0*dt*h0(i)^2.0*fdiff(h0(i+1),h0(i-1),dz)/(4.0*dz)) ...
-                     -(LS(i+1,:)-2.0*LS(i,:)+LS(i-1,:))*dt*h0(i)^3.0/(2.0*dz^2.0);
-
-   A(i,i-1)=A(i,i-1)+3.0*dt*h0(i)^2.0*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1.0)/(4.0*dz);
-   A(i,i)=A(i,i)+1.0-3.0*dt*h0(i)^2.0*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz)/2.0-3.0*dt*h0(i)*fdiff(h0(i+1),h0(i-1),dz)*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1.0);
-   A(i,i+1)=A(i,i+1)-3.0*dt*h0(i)^2.0*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1.0)/(4.0*dz);
-
-   b(i)=h0(i)+dt*h0(i)^2.0*fdiff(h0(i+1),h0(i-1),dz)*(-3.0*fdiff(Pe0(i+1),Pe0(i-1),dz)+1.5) ...
-            -dt*h0(i)^3.0*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz) ...
-            +1.5*dt*h0(i)^2.0*fdiff(h0(i+1),h0(i-1),dz)*(V(i+1)-V(i-1))/(2.0*dz) ...
-            +dt*h0(i)^3.0*(V(i+1)-2.0*V(i)+V(i-1))/(2.0*dz^2.0);
-end
+% for i=2:n-2
+%       A(i,:)=A(i,:)-(LS(i+1,:)-LS(i-1,:))*(3.0*dt*h0(i)^2.0*fdiff(h0(i+1),h0(i-1),dz)/(4.0*dz)) ...
+%                      -(LS(i+1,:)-2.0*LS(i,:)+LS(i-1,:))*dt*h0(i)^3.0/(2.0*dz^2.0);
+% 
+%    A(i,i-1)=A(i,i-1)+3.0*dt*h0(i)^2.0*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1.0)/(4.0*dz);
+%    A(i,i)=A(i,i)+1.0-3.0*dt*h0(i)^2.0*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz)/2.0-3.0*dt*h0(i)*fdiff(h0(i+1),h0(i-1),dz)*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1.0);
+%    A(i,i+1)=A(i,i+1)-3.0*dt*h0(i)^2.0*(fdiff(Pe0(i+1),Pe0(i-1),dz)-1.0)/(4.0*dz);
+% 
+%    b(i)=h0(i)+dt*h0(i)^2.0*fdiff(h0(i+1),h0(i-1),dz)*(-3.0*fdiff(Pe0(i+1),Pe0(i-1),dz)+1.5) ...
+%             -dt*h0(i)^3.0*fdiff2(Pe0(i),Pe0(i+1),Pe0(i-1),dz) ...
+%             +1.5*dt*h0(i)^2.0*fdiff(h0(i+1),h0(i-1),dz)*(V(i+1)-V(i-1))/(2.0*dz) ...
+%             +dt*h0(i)^3.0*(V(i+1)-2.0*V(i)+V(i-1))/(2.0*dz^2.0);
+% end
 
 A(n-1,n-1) = 1;
 A(n-1,n) = -(Kc*(2^0.5)/(2*((xn1)^0.5)));
