@@ -1,4 +1,4 @@
-function [h,hmax,z,zf] = dykeModel(parameters, hin, zin, zf, Kc)
+function dykeModel(parameters, hin, zin, Kc, filename)
 
 %solves the governing dyke model equations using Newton's method
 %input - parameters - model parameters
@@ -17,14 +17,14 @@ h = hin;
 
 n = length(h);
 z = zin(1:n);
-%zf = z(n) + dz/2; %initialise zf
-%zf00 = zf; %store initial value of zf
-%z0 = min(z);
+zf = z(n) + dz/10;
+
 x = zf - z;
 x0 = x(1)/xa + 50;
 
 %BC for h at n-1
 h(n-1) = Kc*(2^0.5)*(x(n-1))^0.5; % h at n-1 
+h(n) = 0;
 
 %initial pressure profile
 Pe0 = zeros(n,1);
@@ -38,14 +38,6 @@ nTimeSteps = parameters.nTimeSteps;
 nPlot = parameters.nPlot;
 dt = parameters.dt;
 
-%output arrays
-hmax = zeros(1,nTimeSteps);
-figure(1); hold on
-%plot(x(1:n-1),h(1:n-1),'k','LineWidth',2)
-xlabel("zf - z")
-ylabel("h")
-figure(2); hold on
-plot(0,zf,'k*')
 
 %MAIN LOOP
  for i = 1:nTimeSteps
@@ -65,38 +57,49 @@ plot(0,zf,'k*')
      [LS,V] = constructLSV(Minv,V1,Pe0,Kc);
      %compute A and b and solve Ah = b
      h = solveSystem(parameters, h0, Pe0, LS, V, x(n),x(n-1),Kc);
+     h = real(h);
      %update zf and Pe
      zf = zf0 + h(n);     
      Pe = elasticPressure(h,LS,V);
+     Pe = real(Pe);
      %check if zf > z(n), and add extra node if so
      if zf > z(n) + dz      
          z = vertcat(z, z(n) + dz);%  
          [h,n,Pe] = addNodes(z,h,Pe0,dz,zf,Kc);  
-     end   
+     end  
+     if zf < z(n)
+        z2 = z(1:n-1);
+        h2 = h(1:n-1);
+        Pe = Pe(1:n-1);
+        n = n-1;
+        h2(n-1) = Kc*(2^0.5)*(zf-z2(n-1))^0.5;
+        h2(n) = h(n+1);
+        h = h2;
+        z = z2;
+     end
              
      if mod(i,nPlot) == 0
         fprintf('Completed step %d \n', i)
         fprintf('max h is %.3f \n', max(h))
-         fig1 = figure(1); hold on
-         plot(vertcat(z(1:n-1),zf),vertcat(h(1:n-1),0),'o-');  
-         plot(z,Pe,'--')        
-         fig2 = figure(2); hold on
-         plot(t,zf,'-o')
-         xlabel("Time")
-         ylabel("zf")
-         fig3 = figure(3); hold on
-         E = (sum(h.^2))^0.5;
-         plot(t,max(h),'ko-');
+%          fig1 = figure(1); hold on
+%          plot(vertcat(z(1:n-1),zf),vertcat(h(1:n-1),0),'o-');  
+%          plot(z,Pe,'--')        
+%          fig2 = figure(2); hold on
+%          plot(t,zf,'-o')
 %          xlabel("Time")
-%          ylabel("width")
-%          saveas(fig1,['profile' num2str(Kc) '_' num2str(i) '.jpg'])
-%          saveas(fig2,['tip' num2str(Kc) '_' num2str(i) '.jpg'])
-%          saveas(fig3,['hmax' num2str(Kc) '_' num2str(i) '.jpg'])
+%          ylabel("zf")
+%          fig3 = figure(3); hold on
+%          E = (sum(h.^2))^0.5;
+%          plot(t,max(h),'ko-');
+         
+         file = ['output/' filename '_' num2str(i) '.txt'];
+         z_out = vertcat(z(1:n-1),zf);
+         h_out = vertcat(h(1:n-1),0);
+         M_out = horzcat(z_out,h_out,Pe);
+         save(file,'M_out','-ascii');
+         
       end
-%      if mod(i,100000) == 0
-%         figure(4); hold on
-%         plot(z,vertcat(h(1:n-1),0),'k-');
-%      end
+
  end
 
 end 

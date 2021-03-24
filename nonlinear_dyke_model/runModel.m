@@ -11,7 +11,18 @@ drho = rhos - rhom;
 g = 9.81;
 Q = 1;
 
-dz = 0.0472/2;
+dz = 0.0472;
+
+%dimensionless numbers
+dza = dz/2;
+ha = (3*mu*Q/(2*drho*g))^(1/3);
+ca = Q/(2*ha);
+%xa = ((3*mu*Q/2)^(1/6))*((G/(1-nu))^0.5)*(drho*g)^(2/3);
+xa=(G*ha/((1.0-nu)*(drho)*g))^0.5;
+Kc = 2;
+ta = xa/ca;
+runtime = 20;
+dta = (runtime/500)*(dza);%dza = dz/za
 
 %define input parameters to pass to model
 parameters = struct();
@@ -20,22 +31,16 @@ parameters = struct();
 %Material/problem parameters
 parameters.Q = Q; %or 2 m^3/ms ?
 parameters.drho = drho;
+parameters.Kc = Kc;
 %parameters.g = 9.81;
 
-%dimensionless numbers
-dza = dz;
-ha = (3*mu*Q/(2*drho*g))^(1/3);
-ca = Q/(2*ha);
-%xa = ((3*mu*Q/2)^(1/6))*((G/(1-nu))^0.5)*(drho*g)^(2/3);
-xa=(G*ha/((1.0-nu)*(drho)*g))^0.5;
-ta = xa/ca;
-dta = (20/500)*(dza);%dza = dz/za
+
 
 %numerical parameters
 parameters.dt = dta;
 parameters.dz = dz;
-parameters.nTimeSteps = 2000000;
-parameters.nPlot = 10;%round(0.1/parameters.dt);
+parameters.nTimeSteps = round(runtime/dta);
+parameters.nPlot = round(0.25/parameters.dt);
 
 
 parameters.ha = ha;
@@ -69,6 +74,7 @@ v = polyval(p, z);
 hq(~tf) = v(~tf);
 h1 = hq - 0.0177;
 h1(n) = 0;
+h1(n-1) = (2^0.5)*(dz/10)^0.5;
 
 dz0 = dza/100;
 z2 = z + z0;
@@ -109,9 +115,9 @@ legend(["Initial condition 1","Initial condition 2"],"Interpreter","Latex","Loca
 %Minv*h = Pe => Minv = Pe/h
 
 Pe0 = zeros(n,1);
-[M1,V1] = constructM1V1(x,Pe0,dz,1,x(1)/xa + 50);
+[M1,V1] = constructM1V1(x,Pe0,dz,2,x(1)/xa + 50);
 
-hn = (2^0.5);
+hn = Kc*(2^0.5);
 hq2 = hq; %hq
 hq2(n) = hn;
 
@@ -145,7 +151,12 @@ title("Initital pressure profile","Interpreter","Latex")
 close all
 
 %initial condition 1, Kc = 1
-[h_final,hmax,z,zf] = dykeModel(parameters,h1,z_full,zf,1); 
+dt_str = strrep(num2str(parameters.dt) , '.' , '_' );
+dz_str = strrep(num2str(parameters.dz) , '.' , '_' );
+filename1 = ['Kc1' 'dt' dt_str 'ic1'];
+filename2 = ['Kc1' 'dt' dt_str 'ic2'];
+filename3 = ['Kc2' 'dt' dt_str 'ic2'];
+%dykeModel(parameters,h2_kc2,z_full,2,filename1); 
 % ic1_kc1 = {parameters,h1,z2,1};
 % 
 % %initial condition 2, Kc = 1
@@ -156,23 +167,12 @@ close all
 % % [h_final,hmax,z,zf] = dykeModel(parameters,h2_kc2,z2,2); 
 % ic2_kc2 = {parameters,h2_kc2,z2,2};
 %% parallel processes
-% func = @dykeModel;
-% arguments = {parameters,h1,z2,1 ; parameters,h2_kc1,z2,1 ; parameters,h2_kc2,z2,2};
-% h_final = cell(1,3);
-% h_max = cell(1,3);
-% z_final = cell(1,3);
-% zf = cell(1,3);
-% 
-% %
-% parfor i = 1:2
-%     [hi,hmi,zi,zfi] = func(arguments{i,:});
-% 
-%   %  [h_final(i,1:4)] = func(arguments{i,:})
-%      h_final{i} = hi;
-%      h_max{i} = hmi;
-%      z_final{i} = zi;
-%      zf{i} = zfi;
-% end
+func = @dykeModel;
+arguments = {parameters,h1,z_full,1,filename1 ; parameters,h2_kc1,z_full,1,filename2 ; parameters,h2_kc2,z_full,2,filename3};
+
+parfor i = 1:3
+    func(arguments{i,:});
+end
 
 
 
