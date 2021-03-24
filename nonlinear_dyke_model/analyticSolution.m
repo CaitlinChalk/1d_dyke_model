@@ -1,4 +1,4 @@
-function h0 = analyticSolution(x,lambda)
+function h2 = analyticSolution(x,lambda)
 
 %produces analytic solution for fracture width which is kept open by a unit
 %overpressure applied over length lambda at the tip
@@ -8,6 +8,9 @@ fx = ( (x.^0.5 + lambda^0.5)./(x.^0.5 - lambda^0.5) );
 ft = -2*x.*atanh( (lambda./x).^0.5 );
 h0 = (1/pi)*(ft + lambda*log(abs(fx)) + 2*(lambda*x).^0.5);
 
+h2 = (1/pi)*(2*((lambda.*x).^0.5) + (lambda - x).*log(abs( (x.^0.5+lambda^0.5)./(x.^0.5-lambda^0.5) ) ) ); 
+
+h3 = (1/pi)*(2*((lambda.*x).^0.5) + (lambda - x).*log(abs( ((x-lambda).^0.5+lambda^0.5)./((x-lambda).^0.5-lambda^0.5) ) ) ); 
 %  L = lambda;
 % % tol = 10e-01;
 % % 

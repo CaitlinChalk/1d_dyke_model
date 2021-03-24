@@ -11,153 +11,168 @@ drho = rhos - rhom;
 g = 9.81;
 Q = 1;
 
+dz = 0.0472;
+
 %define input parameters to pass to model
 parameters = struct();
 
-%numerical parameters
-parameters.dt = 0.000001;
-parameters.dz = 0.0236; 
-parameters.nTimeSteps = 5000000;
-parameters.tol = 1.e-7;
-parameters.maxIts = 100;
 
 %Material/problem parameters
-parameters.Q = 1; %or 2 m^3/ms ?
+parameters.Q = Q; %or 2 m^3/ms ?
 parameters.drho = drho;
 %parameters.g = 9.81;
-parameters.Kc = 1;%*Ks;
 
-%% define initial conditions (h0, zf0)
-dz = parameters.dz;
+%dimensionless numbers
+dza = dz;
+ha = (3*mu*Q/(2*drho*g))^(1/3);
+ca = Q/(2*ha);
+%xa = ((3*mu*Q/2)^(1/6))*((G/(1-nu))^0.5)*(drho*g)^(2/3);
+xa=(G*ha/((1.0-nu)*(drho)*g))^0.5;
+ta = xa/ca;
+dta = (20/500)*(dza);%dza = dz/za
+
+%numerical parameters
+parameters.dt = dta;
+parameters.dz = dz;
+parameters.nTimeSteps = 2000000;
+parameters.nPlot = 10;%round(0.5/parameters.dt);
+
+
+parameters.ha = ha;
+parameters.ca = ca;
+parameters.xa = xa;
+parameters.ta = ta;
+
+
+
+
+% define initial conditions (h0, zf0)
+
 z0 = -100;
-z = (0:dz:11.8)';
+z = (0:dza:11.8)';
 n = length(z);
 
-
+%initial condition 1 - classic dyke shape
+%read in h profile from file (extrapolated from taisne & juapart 2009,fig
+%C1
 M = csvread("initial_width.csv");
 
 %interpolated values of h at z query points
 hq = interp1(M(:,1),M(:,2),z);
-hq2 = hq;
+%manually smooth profile
 tf = (z < 8);
 hq(tf) = 1.0177;
-
 
 %smoother h:
 p = polyfit(z, hq, 9);
 v = polyval(p, z);
 hq(~tf) = v(~tf);
-hq = hq - 0.0177;
-hq(n) = 0;
+h1 = hq - 0.0177;
+h1(n) = 0;
 
+dz0 = dza/100;
 z2 = z + z0;
-zf = z2(n) + dz/100;
+zf = z2(n) + dz0;
 
+z_full = (z0:dz:z0+59)';
+%initial condition 2 - blunt dyke
+
+h2_kc1 = ones(n,1); %for Kc = 1
+h2_kc2 = ones(n,1); %for Kc = 2
+
+check1 = 1.*(2^0.5).*((zf - z2).^0.5); %Kc = 1;
+check2 = 2.*(2^0.5).*((zf - z2).^0.5); %Kc = 2;
+
+h2_kc1(check1 < 1) = check1(check1 < 1);
+h2_kc1(n) = 0;
+
+h2_kc2(check2 < 1) = check2(check2 < 1);
+h2_kc2(n) = 0;
+%coordinate reference system that moves with the front tip position
 x = zf - z2;
 
 close all
-figure; hold on
-plot(z2(1:n-1),hq(1:n-1),'o'); 
-%plot(z(1:n-1),v(1:n-1),'o-'); 
-%M1 = matrixM(x,dz);
-[M1,M2] = matrixMreduced(x,dz);
-%% 
-
-%Pressure profile that has an analytic soltion
-lambda = 2.36;
-Pe0 = ones(n,1);
-tf = (x > lambda);
-Pe0(tf) = 0;
-
-%corresponding h profile according to h = M1Pe0
-h0 = M1*Pe0;
-%analytic profile
-han = analyticSolution(x,lambda);
-
-diff = h0./han;
-
-close all
 figure(1); hold on
-plot(x,h0,'-o')
-plot(x,han,'-k')
-%plot(x,diff,'r')
-plot(z,Pe0,'r')
+plot(z2 - z0,h1,'o-'); 
+plot(z2 - z0,h2_kc1,'o-'); 
+xlabel("$z - z_0$","Interpreter","Latex")
+ylabel("$h$","Interpreter","Latex")
+title("Initital dyke width profile","Interpreter","Latex")
+legend(["Initial condition 1","Initial condition 2"],"Interpreter","Latex","Location","NorthWest")
 
-Minv = real(han)/real(Pe0);
 
-Pe1 = Minv*hq;
+%% Initial pressure profile
 
-plot(x,Pe1,'b')
+%x = b/A => xA = b
+%x = A\b => Ax = b
+%h = M1*Pe => M1 = h/Pe, Pe = M1\h;
+%Minv*h = Pe => Minv = Pe/h
 
-%%
-tol = 1e-02;
-maxit = 499;
-% %Pe_gm = gmres(M1s,h2b(1:nz-1),[],tol,maxit); 
+Pe0 = zeros(n,1);
+[M1,V1] = constructM1V1(x,Pe0,dz,1,x(1)/xa + 50);
+
 hn = (2^0.5);
-hq2 = hq;
+hq2 = hq; %hq
 hq2(n) = hn;
-close all
 
-%M = zeros(N,N);
-d1 = M1(  1:1+n:n*n); %diagonal k = k
-d2 = M1(n+1:1+n:n*n); % k - 1
-d3 = M1(  2:1+n:n*n-n); %k + 1
+%numerical solution using \ operator
+Pe_numeric = M1\hq2;
 
-%Jacobi block
-J = zeros(n,n);
-J(1:1+n:n*n) = d1;
-J(n+1:1+n:n*n) = d2;
-J(2:1+n:n*n-n) = d3;
-
-%ilu
-%J = ichol(M1);
-%
-
-figure(1); pc = pcolor(M1)
-colorbar
-pc.LineStyle='none'
-
-%
-res = [];
-Pe = gmres(M1,hq2,res,tol,maxit);
-PeJ = gmres(M1,hq2,res,tol,maxit,J);
+%numerical solution using inv
 Minv = inv(M1);
-Minv2 = Pe/hq2;
+Pe_numeric2 = Minv*hq2;
 
-Pe3 = Minv2*hq2;
-% close all
-figure(2); hold on
+%alternative way to compute inv(M1)
+A = decomposition(M1);
+I = eye(n);
+Minv2 = A\I;
 
-h2 = M1*Pe;
-h3 = M1*Pe1;
-plot(z,h2,'s');
-plot(z,hq2,'-k');
+%corresponding h profile (back calculation for validation purposes)
+h_numeric = M1*Pe_numeric; 
 
-x1 = 1;
-x2 = n;
-
-figure(3); hold on
-plot(z(x1:x2),Pe(x1:x2),'-ro');
-% plot(z,PeJ,'-g*');
-
-figure(4); pc = pcolor(M1(x1:x2,x1:x2))
-colorbar
-pc.LineStyle='none'
-%%
 close all
-[h,hmax,zf,t] = dykeModel(parameters,hq,z2); 
+figure(2); hold on
+plot(x,h_numeric,'k','LineWidth',2)
+plot(x,Pe_numeric,'r-o')
 
-%%
-% figure(1);
-% plot(z,h);
+xlabel("$z_f - z$","Interpreter","Latex")
+ylabel("$P_e$","Interpreter","Latex")
+title("Initital pressure profile","Interpreter","Latex")
+
+
+
+%% run model
+close all
+
+%initial condition 1, Kc = 1
+[h_final,hmax,z,zf] = dykeModel(parameters,h1,z_full,zf,1); 
+% ic1_kc1 = {parameters,h1,z2,1};
 % 
- figure(3);
- plot(1:parameters.nTimeSteps,hmax)
+% %initial condition 2, Kc = 1
+% % [h_final,hmax,z,zf] = dykeModel(parameters,h2_kc1,z2,1); 
+% ic2_kc1 = {parameters,h2_kc1,z2,1};
 % 
-figure(4);
-plot(1:parameters.nTimeSteps,fnorm)
-%xlabel("Time step")
-%ylabel("norm(f)")
+% % %initial condition 2, Kc = 2
+% % [h_final,hmax,z,zf] = dykeModel(parameters,h2_kc2,z2,2); 
+% ic2_kc2 = {parameters,h2_kc2,z2,2};
+%% parallel processes
+% func = @dykeModel;
+% arguments = {parameters,h1,z2,1 ; parameters,h2_kc1,z2,1 ; parameters,h2_kc2,z2,2};
+% h_final = cell(1,3);
+% h_max = cell(1,3);
+% z_final = cell(1,3);
+% zf = cell(1,3);
+% 
+% %
+% parfor i = 1:2
+%     [hi,hmi,zi,zfi] = func(arguments{i,:});
+% 
+%   %  [h_final(i,1:4)] = func(arguments{i,:})
+%      h_final{i} = hi;
+%      h_max{i} = hmi;
+%      z_final{i} = zi;
+%      zf{i} = zfi;
+% end
 
 
 

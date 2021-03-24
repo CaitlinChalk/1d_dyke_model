@@ -1,1 +1,4 @@
-
+*.asv
+matfiles/
+tests/
+fortran_code/
