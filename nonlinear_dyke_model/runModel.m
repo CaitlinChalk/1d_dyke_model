@@ -35,7 +35,6 @@ parameters.Kc = Kc;
 %parameters.g = 9.81;
 
 
-
 %numerical parameters
 parameters.dt = dta;
 parameters.dz = dz;
@@ -153,9 +152,10 @@ close all
 %initial condition 1, Kc = 1
 dt_str = strrep(num2str(parameters.dt) , '.' , '_' );
 dz_str = strrep(num2str(parameters.dz) , '.' , '_' );
-filename1 = ['Kc1' 'dt' dt_str 'ic1'];
-filename2 = ['Kc1' 'dt' dt_str 'ic2'];
-filename3 = ['Kc2' 'dt' dt_str 'ic2'];
+%output file names
+filename1 = ['Kc1ic1' 'dt' dt_str];
+filename2 = ['Kc1ic2' 'dt' dt_str];
+filename3 = ['Kc2ic2' 'dt' dt_str];
 %dykeModel(parameters,h2_kc2,z_full,2,filename1); 
 % ic1_kc1 = {parameters,h1,z2,1};
 % 

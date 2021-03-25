@@ -92,7 +92,7 @@ dt = parameters.dt;
 %          E = (sum(h.^2))^0.5;
 %          plot(t,max(h),'ko-');
          
-         file = ['output/' filename '_' num2str(i) '.txt'];
+         file = ['output/' filename '_i' num2str(i) '.txt'];
          z_out = vertcat(z(1:n-1),zf);
          h_out = vertcat(h(1:n-1),0);
          M_out = horzcat(z_out,h_out,Pe);
